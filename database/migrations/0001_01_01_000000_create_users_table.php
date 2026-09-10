@@ -14,9 +14,20 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('username')->nullable()->unique();
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->boolean('is_admin')->default(false);
+            
+            // Medical & Cessation progress metrics
+            $table->integer('smoke_free_days')->default(1);
+            $table->string('daily_target')->default('2 Film / Hari');
+            $table->integer('cost_savings')->default(30000);
+            $table->integer('cigs_avoided')->default(20);
+            $table->string('therapy_phase')->default('Fase 1 (Hari 1 - 3)');
+            $table->string('screening_status')->default('Sudah Skrining (FTND: Sedang)');
+            
             $table->rememberToken();
             $table->timestamps();
         });
