@@ -45,10 +45,11 @@
     </style>
 </head>
 <body x-data="{ 
-    currentView: 'welcome', 
+    currentView: (window.location.pathname.includes('/admin') || window.location.search.includes('admin') || window.location.hash === '#admin') ? 'admin-login' : 'welcome', 
     activeTab: 'overview',
     isLoggedIn: false,
     isAdmin: false,
+    adminSearch: '',
     user: {
         name: 'Radecko Pratama',
         email: 'radecko@ashboard.id',
@@ -58,6 +59,17 @@
         cigs_avoided: 280,
         therapy_phase: 'Fase 2 (Hari 4 - 12)',
         screening_status: 'Sudah Skrining (FTND: Sedang)'
+    },
+    adminPatients: [
+        { initials: 'RP', name: 'Radecko Pratama', email: 'radecko@ashboard.id', regDate: '01 Sep 2026', days: 14, target: '2 Film / Hari', savings: 450000, screening: 'Sudah Skrining (FTND: Sedang)', phase: 'Fase 2 (Hari 4 - 12)' },
+        { initials: 'HT', name: 'Haura Tsabitah', email: 'haura@ashboard.id', regDate: '28 Agu 2026', days: 18, target: '2 Film / Hari', savings: 540000, screening: 'Sudah Skrining (FTND: Ringan)', phase: 'Fase 3 (Hari 13 - 25)' },
+        { initials: 'BS', name: 'Budi Santoso', email: 'budi@ashboard.id', regDate: '08 Sep 2026', days: 3, target: '4 Film / Hari', savings: 90000, screening: 'Sudah Skrining (FTND: Berat)', phase: 'Fase 1 (Hari 1 - 3)' },
+        { initials: 'AB', name: 'Alviano Budiman', email: 'alviano@ashboard.id', regDate: '04 Sep 2026', days: 7, target: '2 Film / Hari', savings: 210000, screening: 'Sudah Skrining (FTND: Sedang)', phase: 'Fase 2 (Hari 4 - 12)' }
+    ],
+    get filteredPatients() {
+        if (!this.adminSearch.trim()) return this.adminPatients;
+        let q = this.adminSearch.toLowerCase();
+        return this.adminPatients.filter(p => p.name.toLowerCase().includes(q) || p.email.toLowerCase().includes(q));
     },
     loginEmail: '',
     loginPassword: '',
@@ -144,6 +156,7 @@
                     <button @click="currentView = 'welcome'" :class="currentView === 'welcome' ? 'text-sky-600 font-bold' : 'hover:text-sky-600'">Beranda</button>
                     <a href="#pilar-fitur" @click="currentView = 'welcome'" class="hover:text-sky-600">4 Pilar Fitur</a>
                     <a href="#terapi-cytisine" @click="currentView = 'welcome'" class="hover:text-sky-600">Terapi Film Cytisine</a>
+                    <a href="admin/" @click.prevent="currentView = 'admin-login'" :class="currentView.startsWith('admin') ? 'text-sky-600 font-bold' : 'hover:text-sky-600'">Portal Admin</a>
                     
                     <template x-if="isLoggedIn && !isAdmin">
                         <button @click="currentView = 'dashboard'" class="text-sky-600 font-bold flex items-center gap-1.5 cursor-pointer">
@@ -154,7 +167,7 @@
                     <template x-if="isLoggedIn && isAdmin">
                         <button @click="currentView = 'admin-dashboard'" class="text-sky-600 font-bold flex items-center gap-1.5 px-3 py-1 bg-sky-50 rounded-lg border border-sky-200 cursor-pointer">
                             <span class="w-2 h-2 rounded-full bg-sky-600 animate-pulse"></span>
-                            Portal Admin
+                            Panel Admin
                         </button>
                     </template>
                 </nav>
@@ -464,49 +477,129 @@
         </div>
 
         <!-- VIEW 5: ADMIN LOGIN & DASHBOARD -->
-        <div x-show="currentView === 'admin-login'" x-cloak class="min-h-[calc(100vh-5rem)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-slate-900 text-white">
-            <div class="max-w-md w-full bg-slate-800 rounded-3xl p-8 space-y-6 border border-slate-700">
-                <h2 class="text-2xl font-extrabold text-white text-center">Portal Admin</h2>
+        <div x-show="currentView === 'admin-login'" x-cloak class="min-h-[calc(100vh-5rem)] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-slate-900 text-white relative overflow-hidden">
+            <div class="absolute -top-32 -left-32 w-96 h-96 bg-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -bottom-32 -right-32 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="max-w-md w-full bg-slate-800/90 rounded-3xl shadow-2xl border border-slate-700 p-8 sm:p-10 relative z-10 space-y-6">
+                <div class="text-center space-y-3">
+                    <div class="w-14 h-14 rounded-2xl bg-sky-600 text-white mx-auto flex items-center justify-center font-bold text-2xl shadow-lg shadow-sky-600/30">
+                        🛡️
+                    </div>
+                    <div>
+                        <span class="px-3 py-1 rounded-full bg-sky-500/20 text-sky-300 text-xs font-bold uppercase tracking-wider border border-sky-400/30">
+                            Restricted Area
+                        </span>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mt-2">Portal Admin</h2>
+                        <p class="text-xs text-slate-300">Masuk untuk memantau data & perkembangan pasien AshBoard.</p>
+                    </div>
+                </div>
+
                 <form @submit.prevent="doAdminLogin()" class="space-y-4">
                     <div>
                         <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">Username / Email Admin</label>
-                        <input type="text" x-model="adminLoginInput" required placeholder="Masukkan Username Admin" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-sm">
+                        <input type="text" x-model="adminLoginInput" required placeholder="Masukkan Username Admin" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white">
                     </div>
                     <div>
                         <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">Password Admin</label>
-                        <input type="password" x-model="adminPassword" required placeholder="Masukkan Password Admin" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-sm">
+                        <input type="password" x-model="adminPassword" placeholder="Masukkan Password Admin" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-sm text-white">
                     </div>
-                    <button type="submit" class="w-full py-3.5 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl text-sm cursor-pointer">Masuk Portal Admin</button>
+                    <button type="submit" class="w-full py-3.5 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl text-sm cursor-pointer shadow-lg shadow-sky-600/30">Masuk Portal Admin</button>
                 </form>
+                <div class="pt-4 border-t border-slate-700 text-center">
+                    <button @click="currentView = 'welcome'" class="text-xs font-semibold text-slate-400 hover:text-sky-400">← Kembali ke Beranda Pasien</button>
+                </div>
             </div>
         </div>
 
-        <div x-show="currentView === 'admin-dashboard'" x-cloak class="p-8 space-y-6">
-            <div class="bg-slate-900 rounded-3xl p-6 text-white flex justify-between items-center">
+        <div x-show="currentView === 'admin-dashboard'" x-cloak class="p-6 lg:p-8 space-y-6 bg-slate-950 min-h-[calc(100vh-5rem)]">
+            <div class="bg-slate-900 rounded-3xl p-6 sm:p-8 text-white flex flex-col md:flex-row md:items-center justify-between gap-6 border border-slate-800">
                 <div>
-                    <h1 class="text-2xl font-extrabold">Panel Admin AshBoard</h1>
-                    <p class="text-xs text-slate-300">Pengawasan Pasien Terdaftar & Terapi Cytisine ODF</p>
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/20 text-sky-300 text-xs font-bold border border-sky-400/30 mb-2">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        Portal Supervisi & Pemantauan Medis
+                    </div>
+                    <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Panel Admin AshBoard</h1>
+                    <p class="text-xs sm:text-sm text-slate-300 mt-1">Pengawasan Pasien Terdaftar & Efektivitas Terapi Cytisine ODF</p>
                 </div>
-                <button @click="logout()" class="px-4 py-2 bg-slate-800 rounded-xl text-xs font-bold hover:bg-slate-700 cursor-pointer">Keluar Admin</button>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div class="p-6 bg-white rounded-3xl border border-slate-200">
-                    <span class="text-xs font-bold text-slate-500 uppercase">Pasien Terdaftar</span>
-                    <div class="text-3xl font-extrabold text-slate-900">4 Pasien</div>
-                </div>
-                <div class="p-6 bg-white rounded-3xl border border-slate-200">
-                    <span class="text-xs font-bold text-slate-500 uppercase">Hari Bebas Asap</span>
-                    <div class="text-3xl font-extrabold text-slate-900">42 Hari</div>
-                </div>
-                <div class="p-6 bg-white rounded-3xl border border-slate-200">
-                    <span class="text-xs font-bold text-slate-500 uppercase">Total Penghematan</span>
-                    <div class="text-3xl font-extrabold text-slate-900">Rp 1.290.000</div>
-                </div>
-                <div class="p-6 bg-white rounded-3xl border border-slate-200">
-                    <span class="text-xs font-bold text-slate-500 uppercase">Rokok Dihindari</span>
-                    <div class="text-3xl font-extrabold text-slate-900">840 Batang</div>
+                <div class="flex items-center gap-3">
+                    <button @click="currentView = 'welcome'" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold border border-slate-700 cursor-pointer">Mode Pasien</button>
+                    <button @click="logout()" class="px-4 py-2.5 bg-rose-600/80 hover:bg-rose-600 text-white rounded-xl text-xs font-bold cursor-pointer">Keluar Admin</button>
                 </div>
             </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="p-6 bg-slate-900 rounded-3xl border border-slate-800 space-y-2">
+                    <span class="text-xs font-bold text-slate-400 uppercase">Pasien Terdaftar</span>
+                    <div class="text-3xl font-extrabold text-white">4 Pasien</div>
+                    <p class="text-xs text-sky-400 font-semibold">Pengguna Aktif Terdaftar</p>
+                </div>
+                <div class="p-6 bg-slate-900 rounded-3xl border border-slate-800 space-y-2">
+                    <span class="text-xs font-bold text-slate-400 uppercase">Hari Bebas Asap</span>
+                    <div class="text-3xl font-extrabold text-white">42 Hari</div>
+                    <p class="text-xs text-emerald-400 font-bold">Akumulasi Seluruh Pasien</p>
+                </div>
+                <div class="p-6 bg-slate-900 rounded-3xl border border-slate-800 space-y-2">
+                    <span class="text-xs font-bold text-slate-400 uppercase">Total Penghematan</span>
+                    <div class="text-3xl font-extrabold text-white">Rp 1.290.000</div>
+                    <p class="text-xs text-teal-400 font-bold">Dihemat dari Batang Rokok</p>
+                </div>
+                <div class="p-6 bg-slate-900 rounded-3xl border border-slate-800 space-y-2">
+                    <span class="text-xs font-bold text-slate-400 uppercase">Batang Rokok Dicegah</span>
+                    <div class="text-3xl font-extrabold text-white">840 Batang</div>
+                    <p class="text-xs text-amber-400 font-bold">Batang Rokok Dihindari</p>
+                </div>
+            </div>
+
+            <!-- Patient Progress Monitoring Table -->
+            <section class="bg-slate-900 rounded-3xl border border-slate-800 shadow-sm overflow-hidden space-y-6 p-6 sm:p-8">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-6">
+                    <div>
+                        <h3 class="text-xl font-bold text-white">Pemantauan Perkembangan Pasien</h3>
+                        <p class="text-xs text-slate-400 mt-0.5">Daftar pengguna terdaftar beserta status terapi dan hasil skrining.</p>
+                    </div>
+                    <div class="relative max-w-xs w-full">
+                        <input type="text" x-model="adminSearch" placeholder="Cari nama atau email pasien..." class="w-full px-4 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500">
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="border-b border-slate-800 bg-slate-950/80 text-slate-400 font-bold uppercase tracking-wider">
+                                <th class="py-3.5 px-4">Nama Pasien</th>
+                                <th class="py-3.5 px-4">Tgl Terdaftar</th>
+                                <th class="py-3.5 px-4">Bebas Rokok</th>
+                                <th class="py-3.5 px-4">Target Dosis ODF</th>
+                                <th class="py-3.5 px-4">Penghematan</th>
+                                <th class="py-3.5 px-4">Status Skrining FTND</th>
+                                <th class="py-3.5 px-4">Fase Terapi Cytisine</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800/60 text-slate-200 font-medium">
+                            <template x-for="patient in filteredPatients" :key="patient.email">
+                                <tr class="hover:bg-slate-800/50 transition-colors">
+                                    <td class="py-4 px-4">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-9 h-9 rounded-xl bg-sky-600 text-white font-bold flex items-center justify-center text-xs shrink-0" x-text="patient.initials"></div>
+                                            <div>
+                                                <div class="font-bold text-white text-sm" x-text="patient.name"></div>
+                                                <div class="text-[11px] text-slate-400" x-text="patient.email"></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-4 px-4 text-slate-400" x-text="patient.regDate"></td>
+                                    <td class="py-4 px-4"><span class="font-extrabold text-sky-400 text-sm" x-text="patient.days + ' Hari'"></span></td>
+                                    <td class="py-4 px-4 text-slate-300 font-semibold" x-text="patient.target"></td>
+                                    <td class="py-4 px-4 text-emerald-400 font-extrabold" x-text="'Rp ' + patient.savings.toLocaleString('id-ID')"></td>
+                                    <td class="py-4 px-4"><span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-sky-950 text-sky-300 border border-sky-700/60 inline-block" x-text="patient.screening"></span></td>
+                                    <td class="py-4 px-4"><span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-teal-950 text-teal-300 border border-teal-700/60 inline-block" x-text="patient.phase"></span></td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
         </div>
     </main>
 

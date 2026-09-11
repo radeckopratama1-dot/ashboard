@@ -158,6 +158,7 @@
                         <li><a href="{{ route('login') }}" class="hover:text-sky-400 transition-colors">Masuk Akun</a></li>
                         <li><a href="{{ route('register') }}" class="hover:text-sky-400 transition-colors">Pendaftaran Baru</a></li>
                         <li><a href="{{ route('dashboard') }}" class="hover:text-sky-400 transition-colors">Dashboard Pemantauan</a></li>
+                        <li><a href="{{ route('admin.login') }}" class="hover:text-sky-400 transition-colors">Portal Admin</a></li>
                     </ul>
                 </div>
 
